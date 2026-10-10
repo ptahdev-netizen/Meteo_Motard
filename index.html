@@ -1,0 +1,798 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1">
+<title>Météo Motard</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Oswald:wght@400;500;600;700&family=Work+Sans:wght@400;500;600&display=swap" rel="stylesheet">
+<style>
+  :root{
+    --bg: #24211E;
+    --surface: #2F2B27;
+    --surface-2: #3A342E;
+    --line: #4A443E;
+    --text: #F3EFE7;
+    --text-dim: #B8B0A4;
+    --amber: #E8A33D;
+    --amber-dim: #6b5228;
+    --good: #6FA688;
+    --good-dim: #33473c;
+    --warn: #E8A33D;
+    --bad: #C2503B;
+    --bad-dim: #4a2c26;
+  }
+  *{box-sizing:border-box;}
+  html,body{margin:0;padding:0;}
+  body{
+    background: linear-gradient(180deg, var(--bg), #201D1A);
+    color: var(--text);
+    font-family: 'Work Sans', sans-serif;
+    min-height: 100vh;
+    padding: 0 0 48px 0;
+  }
+  .wrap{max-width: 640px; margin: 0 auto; padding: 24px 18px;}
+
+  header{margin-bottom: 22px;}
+  .plate{
+    display:flex; align-items:baseline; gap:10px;
+    border-bottom: 3px solid var(--amber);
+    padding-bottom: 10px;
+  }
+  h1{
+    font-family:'Oswald', sans-serif;
+    font-weight:700;
+    font-size: 30px;
+    letter-spacing: 0.5px;
+    margin: 0;
+    color: var(--text);
+  }
+  .plate .dot{width:10px;height:10px;border-radius:50%;background:var(--amber); box-shadow:0 0 10px var(--amber);}
+  .tagline{color:var(--text-dim); font-size:14px; margin-top:8px; line-height:1.5;}
+
+  .switch{
+    display:flex;
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 4px;
+    margin: 20px 0 22px 0;
+  }
+  .switch button{
+    flex:1;
+    padding: 12px 8px;
+    background: transparent;
+    border: none;
+    color: var(--text-dim);
+    font-family:'Oswald', sans-serif;
+    font-size: 16px;
+    letter-spacing: 0.3px;
+    border-radius: 7px;
+    cursor: pointer;
+    transition: background .2s, color .2s;
+  }
+  .switch button.active{
+    background: var(--amber);
+    color: #221B0E;
+    font-weight:600;
+  }
+
+  .panel{
+    background: var(--surface);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    padding: 20px;
+  }
+  label{
+    display:block;
+    font-size: 13px;
+    color: var(--text-dim);
+    margin: 14px 0 6px 0;
+  }
+  label:first-of-type{margin-top:0;}
+  input[type="text"], input[type="time"], input[type="date"]{
+    width:100%;
+    background: var(--bg);
+    border: 1px solid var(--line);
+    color: var(--text);
+    border-radius: 8px;
+    padding: 11px 12px;
+    font-family:'Work Sans', sans-serif;
+    font-size: 15px;
+  }
+  input:focus{outline: 2px solid var(--amber); outline-offset: 1px;}
+  .row2{display:flex; gap:12px;}
+  .row2 > div{flex:1;}
+
+  .slider-row{display:flex; align-items:center; gap:12px;}
+  input[type="range"]{flex:1; accent-color: var(--amber);}
+  .slider-val{font-family:'Oswald',sans-serif; color:var(--amber); min-width:56px; text-align:right; font-size:14px;}
+
+  .go-btn{
+    margin-top:20px;
+    width:100%;
+    padding: 14px;
+    background: var(--amber);
+    color: #221B0E;
+    border: none;
+    border-radius: 8px;
+    font-family:'Oswald', sans-serif;
+    font-size: 16px;
+    font-weight: 600;
+    letter-spacing: 0.4px;
+    cursor: pointer;
+  }
+  .go-btn:disabled{opacity:0.6; cursor:default;}
+
+  .status{
+    margin-top:14px;
+    font-size:13px;
+    color: var(--text-dim);
+  }
+  .status.err{color: var(--bad);}
+
+  .results{margin-top: 26px;}
+
+  .day-log{
+    border-top: 1px dashed var(--line);
+    padding: 16px 0;
+  }
+  .day-log:last-child{border-bottom: 1px dashed var(--line);}
+  .day-title{
+    font-family:'Oswald', sans-serif;
+    font-size: 17px;
+    letter-spacing:0.3px;
+    margin-bottom: 12px;
+    display:flex;
+    justify-content: space-between;
+    color: var(--text);
+  }
+  .day-title span.date{color:var(--text-dim); font-family:'Work Sans',sans-serif; font-size:13px; font-weight:400;}
+  .day-dot{
+    display:inline-block; width:11px; height:11px; border-radius:50%;
+    margin: 0 2px 0 8px; vertical-align: middle;
+  }
+  .day-dot.bon{background: var(--good);}
+  .day-dot.prudence{background: var(--warn);}
+  .day-dot.evitez{background: var(--bad);}
+  .leg-label{font-size:12px; color:var(--text-dim); margin: 10px 0 8px 0;}
+  .slots{display:flex; gap:10px;}
+  .slot{
+    flex:1;
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 12px 10px;
+    border-left: 4px solid var(--line);
+    text-align:center;
+  }
+  .slot.bon{border-left-color: var(--good);}
+  .slot.prudence{border-left-color: var(--warn);}
+  .slot.evitez{border-left-color: var(--bad);}
+  .slot .hh{font-size:11px; color:var(--text-dim); margin-bottom:4px;}
+  .slot .ic{font-size:22px; line-height:1;}
+  .slot .temp{font-family:'Oswald',sans-serif; font-size:20px; margin: 3px 0;}
+  .slot .meta{font-size:11px; color:var(--text-dim);}
+  .slot .tag{
+    display:inline-block; margin-top:6px; font-size:10.5px;
+    padding: 2px 7px; border-radius: 20px;
+  }
+  .slot.bon .tag{background:var(--good-dim); color:var(--good);}
+  .slot.prudence .tag{background:var(--amber-dim); color:var(--amber);}
+  .slot.evitez .tag{background:var(--bad-dim); color:#e88a7a;}
+
+  .road{position:relative; padding-left: 26px;}
+  .road::before{
+    content:'';
+    position:absolute; left:9px; top:6px; bottom:6px;
+    width:2px;
+    background-image: linear-gradient(var(--line) 60%, transparent 40%);
+    background-size: 2px 14px;
+    background-repeat: repeat-y;
+  }
+  .stop{position:relative; margin-bottom:16px;}
+  .stop::before{
+    content:'';
+    position:absolute; left:-26px; top:14px;
+    width:12px; height:12px; border-radius:50%;
+    background: var(--bg); border: 2px solid var(--amber);
+  }
+  .stop-card{
+    background: var(--surface-2);
+    border-radius: 10px;
+    padding: 14px 16px;
+    border-left: 4px solid var(--line);
+  }
+  .stop-card.bon{border-left-color: var(--good);}
+  .stop-card.prudence{border-left-color: var(--warn);}
+  .stop-card.evitez{border-left-color: var(--bad);}
+  .stop-head{display:flex; justify-content:space-between; align-items:baseline;}
+  .stop-name{font-family:'Oswald', sans-serif; font-size:17px;}
+  .stop-time{font-size:13px; color:var(--text-dim);}
+  .stop-body{display:flex; align-items:center; gap:14px; margin-top:8px;}
+  .stop-ic{font-size:30px;}
+  .stop-temp{font-family:'Oswald', sans-serif; font-size:26px;}
+  .stop-metrics{font-size:12.5px; color:var(--text-dim); line-height:1.6;}
+  .stop-advice{
+    margin-top:10px; font-size:12.5px;
+    padding-top:8px; border-top:1px solid var(--line);
+    color: var(--text);
+  }
+  .stop-advice b{color:var(--amber); font-weight:600;}
+
+  .legend{
+    display:flex; gap:16px; margin-top:18px; font-size:12px; color:var(--text-dim);
+    flex-wrap:wrap;
+  }
+  .legend span{display:flex; align-items:center; gap:6px;}
+  .legend i{width:10px;height:10px;border-radius:50%; display:inline-block;}
+  .legend .b{background:var(--good);}
+  .legend .p{background:var(--warn);}
+  .legend .e{background:var(--bad);}
+
+  .note{font-size:11.5px; color:var(--text-dim); margin-top:22px; line-height:1.5; border-top:1px dashed var(--line); padding-top:14px;}
+
+  /* --- Profil de conduite --- */
+  .profile-line{
+    display:flex; align-items:center; gap:8px;
+    margin-top:18px;
+    font-size:13px; color:var(--text-dim);
+  }
+  .profile-line b{font-family:'Oswald',sans-serif; font-weight:500; font-size:15px; color:var(--amber); letter-spacing:0.3px;}
+  .profile-line .sep{color:var(--line);}
+  .link-btn{
+    background:none; border:none; padding:6px 4px;
+    color:var(--amber); font-family:'Work Sans',sans-serif; font-size:13px;
+    text-decoration:underline; text-underline-offset:3px; cursor:pointer;
+  }
+
+  .overlay{
+    position:fixed; inset:0; z-index:50;
+    background: rgba(20,18,16,0.78);
+    display:none; align-items:flex-end; justify-content:center;
+  }
+  .overlay.open{display:flex;}
+  .sheet{
+    width:100%; max-width:640px; max-height:92vh; overflow-y:auto;
+    background: var(--surface);
+    border: 1px solid var(--line); border-bottom:none;
+    border-radius: 16px 16px 0 0;
+    padding: 20px 18px 24px 18px;
+  }
+  .sheet h2{font-family:'Oswald',sans-serif; font-weight:600; font-size:20px; margin:0 0 6px 0;}
+  .sheet .intro{font-size:13px; color:var(--text-dim); line-height:1.5; margin-bottom:14px;}
+  .profile-opt{
+    display:block; width:100%; text-align:left;
+    background: var(--surface-2); color: var(--text);
+    border: 2px solid var(--line); border-radius: 10px;
+    padding: 12px 14px; margin-bottom:10px; cursor:pointer;
+    font-family:'Work Sans',sans-serif;
+  }
+  .profile-opt.selected{border-color: var(--amber);}
+  .profile-opt .p-name{font-family:'Oswald',sans-serif; font-size:17px; letter-spacing:0.3px;}
+  .profile-opt.selected .p-name{color:var(--amber);}
+  .profile-opt .p-level{font-size:12px; color:var(--amber); margin-left:8px; font-family:'Work Sans',sans-serif;}
+  .profile-opt .p-desc{font-size:12.5px; color:var(--text-dim); margin-top:4px; line-height:1.5;}
+  .profile-opt .p-th{font-size:12.5px; color:var(--text); margin-top:6px; line-height:1.6;}
+  .sheet .common{font-size:11.5px; color:var(--text-dim); line-height:1.5; margin:4px 0 16px 0;}
+  .sheet-actions{display:flex; gap:10px;}
+  .sheet-actions button{
+    flex:1; padding:13px; border-radius:8px; cursor:pointer;
+    font-family:'Oswald',sans-serif; font-size:16px; font-weight:600; letter-spacing:0.4px;
+  }
+  .btn-ok{background:var(--amber); color:#221B0E; border:none;}
+  .btn-cancel{background:transparent; color:var(--text-dim); border:1px solid var(--line);}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <header>
+    <div class="plate">
+      <div class="dot"></div>
+      <h1>Météo Motard</h1>
+    </div>
+    <div class="tagline">Prévisions pensées pour la selle : pluie, vent, verglas — ce qu'il te faut savoir avant de démarrer.</div>
+    <div class="profile-line">
+      <span>Profil :</span><b id="profile-name">Urbain</b>
+      <span class="sep">·</span>
+      <button class="link-btn" id="profile-change" type="button">Changer</button>
+    </div>
+  </header>
+
+  <div class="switch">
+    <button id="btn-travail" class="active">Travail</button>
+    <button id="btn-promenade">Promenade</button>
+  </div>
+
+  <div class="panel" id="panel-travail">
+    <label for="t-depart">Ville de départ (domicile)</label>
+    <input type="text" id="t-depart" placeholder="ex. Vincennes" list="villes-recentes" value="Maisons-Alfort">
+    <label for="t-arrivee">Ville d'arrivée (travail)</label>
+    <input type="text" id="t-arrivee" placeholder="ex. Paris" list="villes-recentes" value="Paris 8">
+    <div class="row2">
+      <div>
+        <label for="t-heure-aller">Heure trajet aller</label>
+        <input type="time" id="t-heure-aller" value="07:00">
+      </div>
+      <div>
+        <label for="t-heure-retour">Heure trajet retour</label>
+        <input type="time" id="t-heure-retour" value="18:00">
+      </div>
+    </div>
+    <button class="go-btn" id="go-travail">Voir la semaine</button>
+    <div class="status" id="status-travail"></div>
+  </div>
+
+  <div class="panel" id="panel-promenade" style="display:none;">
+    <label for="p-date">Date de départ</label>
+    <input type="date" id="p-date">
+    <label for="p-heure">Heure de départ</label>
+    <input type="time" id="p-heure" value="10:00">
+    <label for="p-trajet">Trajet (villes séparées par des virgules)</label>
+    <input type="text" id="p-trajet" placeholder="ex. Fontainebleau, Milly-la-Forêt, Étampes">
+    <label for="p-interval">Temps estimé entre chaque étape</label>
+    <div class="slider-row">
+      <input type="range" id="p-interval" min="15" max="120" step="15" value="45">
+      <div class="slider-val" id="p-interval-val">45 min</div>
+    </div>
+    <button class="go-btn" id="go-promenade">Voir le trajet</button>
+    <div class="status" id="status-promenade"></div>
+  </div>
+
+  <div class="results" id="results"></div>
+
+  <div class="legend">
+    <span><i class="b"></i>Ça roule</span>
+    <span><i class="p"></i>Prudence</span>
+    <span><i class="e"></i>À éviter</span>
+  </div>
+
+  <div class="overlay" id="profile-overlay">
+    <div class="sheet" role="dialog" aria-modal="true" aria-labelledby="profile-title">
+      <h2 id="profile-title">Ton profil de conduite</h2>
+      <div class="intro">Le profil règle ton niveau d'alerte au vent et aux rafales. À toi de choisir selon ton trajet et ta sensibilité : un pilote qui roule en campagne mais supporte bien le vent peut prendre Mixte, et inversement.</div>
+      <div id="profile-options"></div>
+      <div class="common">Pluie, température et type de temps (brouillard, orage, neige…) restent identiques quel que soit le profil.</div>
+      <div class="sheet-actions">
+        <button class="btn-cancel" id="profile-cancel" type="button">Annuler</button>
+        <button class="btn-ok" id="profile-ok" type="button">OK</button>
+      </div>
+    </div>
+  </div>
+
+  <datalist id="villes-recentes"></datalist>
+
+  <div class="note">Données horaires Open-Meteo (gratuit, sans clé). Prévisions disponibles jusqu'à 16 jours, avec une fiabilité qui diminue au-delà de J+3/J+4, comme pour tout service météo.</div>
+</div>
+
+<script>
+// --- Profils de conduite : niveau d'alerte au vent (km/h) ---
+// Seul endroit à modifier pour ajuster les seuils. Pluie, température et codes météo
+// restent communs à tous les profils (voir ridingScore()).
+//   windPrudence / windEvitez : vent moyen
+//   gustPrudence / gustEvitez : rafales
+//   gustAdvice : rafales à partir desquelles adviceText() signale « rafales fortes »
+const DEFAULT_PROFILE = 'urbain';
+const PROFILES = {
+  urbain: {
+    name: 'Urbain', level: 'alertes tardives',
+    desc: 'Trajet abrité par le bâti (ville dense), ou pilote peu sensible au vent.',
+    windPrudence: 30, windEvitez: 45, gustPrudence: 55, gustEvitez: 70, gustAdvice: 45
+  },
+  mixte: {
+    name: 'Mixte', level: 'alertes intermédiaires',
+    desc: 'Banlieue, périurbain, tronçons dégagés en alternance avec des zones abritées.',
+    windPrudence: 27, windEvitez: 40, gustPrudence: 48, gustEvitez: 62, gustAdvice: 38
+  },
+  route: {
+    name: 'Route', level: 'alertes précoces',
+    desc: 'Campagne, plaine, voies rapides, longues distances, ou pilote sensible au vent.',
+    windPrudence: 23, windEvitez: 35, gustPrudence: 40, gustEvitez: 55, gustAdvice: 30
+  }
+};
+
+// --- Profil actif (mémorisé dans le navigateur, Urbain par défaut) ---
+let activeProfile = DEFAULT_PROFILE;
+try{
+  const saved = localStorage.getItem('meteoMotardProfil');
+  if(saved && PROFILES[saved]) activeProfile = saved;
+}catch(e){}
+
+function currentProfile(){ return PROFILES[activeProfile]; }
+
+function renderProfileLine(){
+  document.getElementById('profile-name').textContent = currentProfile().name;
+}
+
+let pendingProfile = activeProfile;
+
+function renderProfileOptions(){
+  const box = document.getElementById('profile-options');
+  box.innerHTML = Object.keys(PROFILES).map(key => {
+    const p = PROFILES[key];
+    return `<button type="button" class="profile-opt ${key===pendingProfile?'selected':''}" data-profile="${key}">
+      <div><span class="p-name">${p.name}</span><span class="p-level">${p.level}</span></div>
+      <div class="p-desc">${p.desc}</div>
+      <div class="p-th">
+        Prudence dès ${p.windPrudence} km/h de vent ou ${p.gustPrudence} km/h de rafales.<br>
+        Évitez dès ${p.windEvitez} km/h de vent ou ${p.gustEvitez} km/h de rafales.
+      </div>
+    </button>`;
+  }).join('');
+  box.querySelectorAll('.profile-opt').forEach(btn => {
+    btn.addEventListener('click', () => {
+      pendingProfile = btn.dataset.profile;
+      renderProfileOptions();
+    });
+  });
+}
+
+function openProfilePanel(){
+  pendingProfile = activeProfile;
+  renderProfileOptions();
+  document.getElementById('profile-overlay').classList.add('open');
+}
+function closeProfilePanel(){
+  document.getElementById('profile-overlay').classList.remove('open');
+}
+
+document.getElementById('profile-change').addEventListener('click', openProfilePanel);
+document.getElementById('profile-cancel').addEventListener('click', closeProfilePanel);
+document.getElementById('profile-overlay').addEventListener('click', (e)=>{
+  if(e.target.id === 'profile-overlay') closeProfilePanel();
+});
+document.getElementById('profile-ok').addEventListener('click', ()=>{
+  const changed = pendingProfile !== activeProfile;
+  activeProfile = pendingProfile;
+  try{ localStorage.setItem('meteoMotardProfil', activeProfile); }catch(e){}
+  renderProfileLine();
+  closeProfilePanel();
+  if(changed) refreshResults();
+});
+renderProfileLine();
+
+// Dernier affichage de résultats, pour le recalculer quand le profil change
+let lastRun = null;
+function refreshResults(){
+  if(lastRun === 'travail') runTravail();
+  else if(lastRun === 'promenade') runPromenade();
+}
+
+const geoCache = {};
+const forecastCache = {};
+const cityAliases = {
+  'paris 8': {lat: 48.8718, lon: 2.3072, label: 'Paris 8e'}
+};
+
+// --- Historique des villes récentes (mémorisé dans le navigateur) ---
+function addRecentCity(name){
+  if(!name) return;
+  let list = [];
+  try{ list = JSON.parse(localStorage.getItem('meteoMotardVillesRecentes') || '[]'); }catch(e){ list = []; }
+  list = list.filter(v => v.toLowerCase() !== name.toLowerCase());
+  list.unshift(name);
+  list = list.slice(0, 5);
+  try{ localStorage.setItem('meteoMotardVillesRecentes', JSON.stringify(list)); }catch(e){}
+  renderVillesDatalist();
+}
+
+function renderVillesDatalist(){
+  let list = [];
+  try{ list = JSON.parse(localStorage.getItem('meteoMotardVillesRecentes') || '[]'); }catch(e){ list = []; }
+  const dl = document.getElementById('villes-recentes');
+  if(dl) dl.innerHTML = list.map(v => `<option value="${v}"></option>`).join('');
+}
+renderVillesDatalist();
+
+function todayISO(){
+  return new Date().toISOString().slice(0,10);
+}
+document.getElementById('p-date').value = todayISO();
+document.getElementById('p-date').min = todayISO();
+{
+  const maxD = new Date();
+  maxD.setDate(maxD.getDate()+15);
+  document.getElementById('p-date').max = maxD.toISOString().slice(0,10);
+}
+
+document.getElementById('p-interval').addEventListener('input', (e)=>{
+  document.getElementById('p-interval-val').textContent = e.target.value + ' min';
+});
+
+document.getElementById('btn-travail').addEventListener('click', ()=> switchMode('travail'));
+document.getElementById('btn-promenade').addEventListener('click', ()=> switchMode('promenade'));
+
+function switchMode(mode){
+  document.getElementById('btn-travail').classList.toggle('active', mode==='travail');
+  document.getElementById('btn-promenade').classList.toggle('active', mode==='promenade');
+  document.getElementById('panel-travail').style.display = mode==='travail' ? 'block' : 'none';
+  document.getElementById('panel-promenade').style.display = mode==='promenade' ? 'block' : 'none';
+  document.getElementById('results').innerHTML = '';
+  document.getElementById('status-travail').textContent = '';
+  document.getElementById('status-promenade').textContent = '';
+  lastRun = null;
+}
+
+async function geocode(name){
+  const key = name.trim().toLowerCase();
+  if(cityAliases[key]) return cityAliases[key];
+  if(geoCache[key]) return geoCache[key];
+  const url = `https://geocoding-api.open-meteo.com/v1/search?name=${encodeURIComponent(name)}&count=1&language=fr&format=json`;
+  const res = await fetch(url);
+  const data = await res.json();
+  if(!data.results || data.results.length===0){
+    throw new Error(`Ville introuvable : "${name}"`);
+  }
+  const r = data.results[0];
+  const loc = {lat: r.latitude, lon: r.longitude, label: r.name};
+  geoCache[key] = loc;
+  return loc;
+}
+
+async function getForecast(lat, lon){
+  const key = lat.toFixed(2)+','+lon.toFixed(2);
+  if(forecastCache[key]) return forecastCache[key];
+  const url = `https://api.open-meteo.com/v1/forecast?latitude=${lat}&longitude=${lon}`
+    + `&hourly=temperature_2m,apparent_temperature,precipitation_probability,precipitation,windspeed_10m,windgusts_10m,weathercode,visibility`
+    + `&timezone=auto&forecast_days=16`;
+  const res = await fetch(url);
+  const data = await res.json();
+  forecastCache[key] = data.hourly;
+  return data.hourly;
+}
+
+function nearestHourIndex(hourly, dateStr, hh){
+  const target = `${dateStr}T${hh}:00`;
+  let idx = hourly.time.indexOf(target);
+  if(idx !== -1) return idx;
+  const targetMs = new Date(target).getTime();
+  let best = 0, bestDiff = Infinity;
+  for(let i=0;i<hourly.time.length;i++){
+    const diff = Math.abs(new Date(hourly.time[i]).getTime() - targetMs);
+    if(diff < bestDiff){ bestDiff = diff; best = i; }
+  }
+  return best;
+}
+
+function weatherIcon(code){
+  if(code===0) return '☀️';
+  if(code===1) return '🌤️';
+  if(code===2) return '⛅';
+  if(code===3) return '☁️';
+  if(code===45||code===48) return '🌫️';
+  if([51,53,55,56,57].includes(code)) return '🌦️';
+  if([61,63,65,80,81,82].includes(code)) return '🌧️';
+  if([66,67].includes(code)) return '🧊';
+  if([71,73,75,77,85,86].includes(code)) return '❄️';
+  if([95,96,99].includes(code)) return '⛈️';
+  return '🌡️';
+}
+
+function worstScore(scores){
+  if(scores.includes('evitez')) return 'evitez';
+  if(scores.includes('prudence')) return 'prudence';
+  return 'bon';
+}
+
+function ridingScore(m){
+  const badCodes = [95,96,99,71,73,75,77,85,86,66,67];
+  const cautionCodes = [45,48,51,53,55,56,57,80,81,82];
+  const p = currentProfile();
+  if(m.precipProb>=50 || m.precip>1 || m.wind>=p.windEvitez || m.gust>=p.gustEvitez || m.temp<=2 || badCodes.includes(m.code)){
+    return 'evitez';
+  }
+  if(m.precipProb>=20 || m.wind>=p.windPrudence || m.gust>=p.gustPrudence || m.temp<=7 || cautionCodes.includes(m.code)){
+    return 'prudence';
+  }
+  return 'bon';
+}
+
+function adviceText(m, score){
+  const bits = [];
+  if(m.temp<=2) bits.push('risque de verglas, roule très prudemment');
+  else if(m.temp<=7) bits.push('sous-combinaison et gants chauds conseillés');
+  if(m.precipProb>=50 || m.precip>0.5) bits.push('combinaison imperméable, route glissante probable');
+  else if(m.precipProb>=20) bits.push('emporte une veste imperméable au cas où');
+  const p = currentProfile();
+  if(m.gust>=p.gustAdvice) bits.push('rafales fortes, attention en ligne droite et sur les ponts');
+  else if(m.wind>=p.windPrudence) bits.push('vent soutenu, reste vigilant');
+  if(bits.length===0) bits.push('conditions correctes pour rouler tranquille');
+  return bits.join(' · ');
+}
+
+function metricsFromHour(hourly, idx){
+  return {
+    temp: Math.round(hourly.temperature_2m[idx]),
+    feels: Math.round(hourly.apparent_temperature[idx]),
+    precipProb: hourly.precipitation_probability[idx],
+    precip: hourly.precipitation[idx],
+    wind: Math.round(hourly.windspeed_10m[idx]),
+    gust: Math.round(hourly.windgusts_10m[idx]),
+    code: hourly.weathercode[idx],
+    visibility: hourly.visibility[idx]
+  };
+}
+
+function addHours(hh, add){
+  let [h,m] = hh.split(':').map(Number);
+  h = (h + add) % 24;
+  return String(h).padStart(2,'0')+':'+String(m).padStart(2,'0');
+}
+
+function fmtDateLabel(d){
+  const jours = ['dimanche','lundi','mardi','mercredi','jeudi','vendredi','samedi'];
+  const mois = ['jan.','fév.','mars','avr.','mai','juin','juil.','août','sept.','oct.','nov.','déc.'];
+  return { weekday: jours[d.getDay()], date: `${d.getDate()} ${mois[d.getMonth()]}` };
+}
+
+function getNextWeekdays(n){
+  const days = [];
+  let d = new Date();
+  d.setHours(0,0,0,0);
+  let guard = 0;
+  while(days.length < n && guard < 30){
+    const day = d.getDay();
+    if(day>=1 && day<=5) days.push(new Date(d));
+    d.setDate(d.getDate()+1);
+    guard++;
+  }
+  return days;
+}
+
+function slotHTML(hh, m){
+  const score = ridingScore(m);
+  const tagText = score==='bon' ? 'Ça roule' : score==='prudence' ? 'Prudence' : 'Évitez';
+  return `<div class="slot ${score}">
+    <div class="hh">${hh}</div>
+    <div class="ic">${weatherIcon(m.code)}</div>
+    <div class="temp">${m.temp}°</div>
+    <div class="meta">💧${m.precipProb}%</div>
+    <div class="meta">🌬️${m.wind} · 💨raf.${m.gust}</div>
+    <div class="tag">${tagText}</div>
+  </div>`;
+}
+
+document.getElementById('go-travail').addEventListener('click', runTravail);
+document.getElementById('go-promenade').addEventListener('click', runPromenade);
+
+async function runTravail(){
+  const statusEl = document.getElementById('status-travail');
+  const results = document.getElementById('results');
+  const btn = document.getElementById('go-travail');
+  const villeDepart = document.getElementById('t-depart').value.trim();
+  const villeArrivee = document.getElementById('t-arrivee').value.trim();
+  const heureAller = document.getElementById('t-heure-aller').value;
+  const heureRetour = document.getElementById('t-heure-retour').value;
+
+  if(!villeDepart || !villeArrivee){
+    statusEl.textContent = 'Renseigne les deux villes.';
+    statusEl.className = 'status err';
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.className = 'status';
+  statusEl.textContent = 'Recherche des villes et récupération des prévisions…';
+  results.innerHTML = '';
+
+  try{
+    const [depart, arrivee] = await Promise.all([geocode(villeDepart), geocode(villeArrivee)]);
+    const [hourlyDepart, hourlyArrivee] = await Promise.all([
+      getForecast(depart.lat, depart.lon),
+      getForecast(arrivee.lat, arrivee.lon)
+    ]);
+
+    const days = getNextWeekdays(5);
+    const allerH2 = addHours(heureAller, 2);
+    const retourH2 = addHours(heureRetour, 2);
+
+    let html = '';
+    for(const d of days){
+      const iso = d.toISOString().slice(0,10);
+      const {weekday, date} = fmtDateLabel(d);
+
+      const mAller1 = metricsFromHour(hourlyDepart, nearestHourIndex(hourlyDepart, iso, heureAller));
+      const mAller2 = metricsFromHour(hourlyDepart, nearestHourIndex(hourlyDepart, iso, allerH2));
+      const mRetour1 = metricsFromHour(hourlyArrivee, nearestHourIndex(hourlyArrivee, iso, heureRetour));
+      const mRetour2 = metricsFromHour(hourlyArrivee, nearestHourIndex(hourlyArrivee, iso, retourH2));
+      const dayWorst = worstScore([mAller1, mAller2, mRetour1, mRetour2].map(ridingScore));
+
+      html += `<div class="day-log">
+        <div class="day-title">${weekday}<span class="day-dot ${dayWorst}"></span><span class="date">${date}</span></div>
+        <div class="leg-label">Aller — ${depart.label} → ${arrivee.label}</div>
+        <div class="slots">
+          ${slotHTML(heureAller, mAller1)}
+          ${slotHTML(allerH2, mAller2)}
+        </div>
+        <div class="leg-label" style="margin-top:14px;">Retour — ${arrivee.label} → ${depart.label}</div>
+        <div class="slots">
+          ${slotHTML(heureRetour, mRetour1)}
+          ${slotHTML(retourH2, mRetour2)}
+        </div>
+      </div>`;
+    }
+    results.innerHTML = html;
+    statusEl.textContent = '';
+    lastRun = 'travail';
+    addRecentCity(depart.label);
+    addRecentCity(arrivee.label);
+  }catch(err){
+    statusEl.className = 'status err';
+    statusEl.textContent = err.message || 'Une erreur est survenue. Si tu vois "Failed to fetch", ouvre ce fichier hors de l\'aperçu Claude.ai (téléchargé ou hébergé).';
+  }finally{
+    btn.disabled = false;
+  }
+}
+
+async function runPromenade(){
+  const statusEl = document.getElementById('status-promenade');
+  const results = document.getElementById('results');
+  const btn = document.getElementById('go-promenade');
+  const date = document.getElementById('p-date').value;
+  const heureDepart = document.getElementById('p-heure').value;
+  const trajetRaw = document.getElementById('p-trajet').value;
+  const interval = parseInt(document.getElementById('p-interval').value, 10);
+
+  const villes = trajetRaw.split(',').map(v=>v.trim()).filter(Boolean);
+  if(!date || !heureDepart || villes.length===0){
+    statusEl.textContent = "Renseigne la date, l'heure et au moins une ville.";
+    statusEl.className = 'status err';
+    return;
+  }
+
+  btn.disabled = true;
+  statusEl.className = 'status';
+  statusEl.textContent = 'Recherche des étapes et récupération des prévisions…';
+  results.innerHTML = '';
+
+  try{
+    let html = '<div class="road">';
+    let [h, m] = heureDepart.split(':').map(Number);
+    let cumulativeMinutes = h*60 + m;
+
+    for(let i=0; i<villes.length; i++){
+      const loc = await geocode(villes[i]);
+      const hourly = await getForecast(loc.lat, loc.lon);
+
+      const hh = String(Math.floor((cumulativeMinutes/60)%24)).padStart(2,'0');
+      const mm = String(cumulativeMinutes%60).padStart(2,'0');
+      const timeStr = `${hh}:${mm}`;
+
+      const metrics = metricsFromHour(hourly, nearestHourIndex(hourly, date, timeStr));
+      const score = ridingScore(metrics);
+      const tagText = score==='bon' ? 'Ça roule' : score==='prudence' ? 'Prudence' : 'Évitez';
+
+      html += `<div class="stop">
+        <div class="stop-card ${score}">
+          <div class="stop-head">
+            <div class="stop-name">${loc.label}</div>
+            <div class="stop-time">≈ ${timeStr}</div>
+          </div>
+          <div class="stop-body">
+            <div class="stop-ic">${weatherIcon(metrics.code)}</div>
+            <div class="stop-temp">${metrics.temp}°</div>
+            <div class="stop-metrics">
+              Ressenti ${metrics.feels}° · 💧 ${metrics.precipProb}%<br>
+              🌬️ ${metrics.wind} km/h (raf. ${metrics.gust})
+            </div>
+          </div>
+          <div class="stop-advice"><b>${tagText}.</b> ${adviceText(metrics, score)}</div>
+        </div>
+      </div>`;
+
+      cumulativeMinutes += interval;
+      addRecentCity(loc.label);
+    }
+    html += '</div>';
+    results.innerHTML = html;
+    statusEl.textContent = '';
+    lastRun = 'promenade';
+  }catch(err){
+    statusEl.className = 'status err';
+    statusEl.textContent = err.message || 'Une erreur est survenue.';
+  }finally{
+    btn.disabled = false;
+  }
+}
+</script>
+</body>
+</html>
